@@ -7,6 +7,16 @@ using namespace std;
 class ExceptionWrongSyntax {};
 
 class Linie {
+	int nrColoane;
+	Coloana* listaColoane;
+public:
+	Linie(int nrColoane, Coloana* listaColoane){
+		this->nrColoane = nrColoane;
+		this->listaColoane = new Coloana[nrColoane];
+		for (int i = 0; i < nrColoane; i++) {
+			this->listaColoane[i] = listaColoane[i];
+		}
+	}
 
 };
 
@@ -15,6 +25,11 @@ class Coloana {
 	int dimensiune;
 	string valoareImplicita;
 public:
+	Coloana() {
+		this->tip = "number";
+		this->dimensiune = 7;
+		this->valoareImplicita = "100";
+	}
 	Coloana(string tip, int dimensiune, string valoareImplicita) {
 		this->tip = tip;
 		this->dimensiune = dimensiune;
