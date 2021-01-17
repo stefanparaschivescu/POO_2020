@@ -147,11 +147,25 @@ public:
 		return this->nrColoane;
 	}
 
+	void setListaColoane(Coloana* newColumns) {
+		for (int i = 0; i < this->getNrCol(); i++)
+		{
+			this->listaColoane[i].setDimensiune(newColumns->getDimensiune());
+			this->listaColoane[i].setNumeColoana(newColumns->getNumeColoana());
+			this->listaColoane[i].setTip(newColumns->getTip());
+			this->listaColoane[i].setValoareImplicita(newColumns->getValoareImplicita());
+		}
+	}
+
+	Coloana* getListaColoane() {
+		return this->listaColoane;
+	}
+
 };
 
 ostream& operator<<(ostream& out, const Linie& l) {
 	for (int i = 0; i < l.nrColoane; i++) {
-		out << l.listaColoane[i] << " ";
+		out << l.listaColoane[i].getValoareImplicita() << " ";
 	}
 	return out;
 }
@@ -178,6 +192,8 @@ public:
 			this->coloane[i] = Coloana(coloane[i]);
 		}
 		this->nrLinii = 0;
+
+		this->linii = new Linie[nrLinii];
 	}
 
 	Tabel(string numeTabel, int nrColoane, Coloana* coloane, int nrLinii, Linie* linii) {
@@ -628,7 +644,7 @@ public:
 				for (int nrLinii = 0; nrLinii < this->tabele[i].getNrLinii(); nrLinii++)
 				{
 					//for (int j = 0; j < this->tabele[i].getNrColoane(); j++) {
-					cout << this->tabele[i].getLinii()[nrLinii] << endl;;
+					cout << this->tabele[i].getLinii()[nrLinii]<< endl;;
 					//}
 				}
 
@@ -767,8 +783,13 @@ public:
 		// ma apuc sa creez o linie
 		//cout << "valorile:" << endl;
 			for (int i = pozInceputInserabile; i < pozFinalInserabile; i++) {
+				int nrCol = 0;
 				if (instructiuniSintaxa[i] != "(" && instructiuniSintaxa[i] != ")" && instructiuniSintaxa[i] != "," && instructiuniSintaxa[i] != ";") {
-					listaCol[newNrColoane++].setValoareImplicita(instructiuniSintaxa[i]);
+					nrCol++;
+					listaCol[newNrColoane].setValoareImplicita(instructiuniSintaxa[i]);
+					listaCol[newNrColoane].setDimensiune(this->tabele[semafor].getColoane()[nrCol].getDimensiune());
+					listaCol[newNrColoane].setNumeColoana(this->tabele[semafor].getColoane()[nrCol].getNumeColoana());
+					listaCol[newNrColoane].setTip(this->tabele[semafor].getColoane()[nrCol].getTip());
 					//cout << instructiuniSintaxa[i] << endl;
 				}
 			}
@@ -784,14 +805,17 @@ public:
 		//temporar - setez toate liniile intr-un obiect, ca sa le parsez la setter-ul pt linii
 		//
 
-		Linie* liniiTemp = new Linie[this->tabele[semafor].getNrLinii() + 1];
+		Linie* liniiTemp = new Linie[this->tabele[semafor].getNrLinii() + 1]();
 		liniiTemp = this->tabele[semafor].getLinii();
-		for (int i = 0; i < this->tabele[semafor].getNrLinii() && &liniiTemp[i]!=NULL; i++) {
+		for (int i = 0; i < this->tabele[semafor].getNrLinii(); i++) {
 			cout << liniiTemp[i];
 		}
-		//liniiTemp[this->tabele[semafor].getNrLinii()] = temp;
-		/*	this->tabele[semafor].setLinii();*/
 
+		liniiTemp[this->tabele[semafor].getNrLinii()].setListaColoane(temp.getListaColoane());
+		this->tabele[semafor].setLinii(liniiTemp);
+		for (int i = 0; i < this->tabele[semafor].getNrLinii(); i++) {
+			cout << liniiTemp[i];
+		}
 
 		/*for (int i = pozInceputInserabile; i < pozFinalInserabile; i++) {
 			this->tabele[semafor].linii[this->tabele[semafor].nrLinii];
