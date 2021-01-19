@@ -13,7 +13,7 @@ class ExceptionWrongSyntax {};
 class ExceptionTableNotExisting {};
 class ExceptionNoTablesFound {};
 class ExceptionNoInstruction {};
-class ExceptionPositionNotExisting {};				/*EXCEPTIILE*/
+class ExceptionPositionNotExisting {};				
 class ExceptionInvalidCommand {};
 class ExceptionProgramStopped {};
 class ExceptionTableAlreadyExists {};
@@ -87,9 +87,16 @@ public:
 
 	void setValoareImplicita(string valoareImplicita) {
 		this->valoareImplicita = valoareImplicita;
+
 	}
 
+	friend ostream& operator<<(ostream& out, const Coloana& c);
 };
+
+ostream& operator<<(ostream& out, const Coloana& c) {
+	out << c.valoareImplicita;
+	return out;
+}
 
 class Linie {							/*LINIILE*/
 	int nrColoane;
@@ -112,7 +119,7 @@ public:
 	Linie(const Linie& l) {
 		this->nrColoane = l.nrColoane;
 		this->listaColoane = new Coloana[l.nrColoane];
-		for(int i=0; i<this->nrColoane; i++) {
+		for (int i = 0; i < this->nrColoane; i++) {
 			this->listaColoane = l.listaColoane;
 		}
 	}
@@ -129,6 +136,9 @@ public:
 		return *this;
 	}
 
+	friend ostream& operator<<(ostream& out, const Linie& l);
+
+
 	void setNrCol(int newNrCol) {
 		this->nrColoane = newNrCol;
 	}
@@ -137,7 +147,28 @@ public:
 		return this->nrColoane;
 	}
 
+	void setListaColoane(Coloana* newColumns) {
+		for (int i = 0; i < this->getNrCol(); i++)
+		{
+			this->listaColoane[i].setNumeColoana(newColumns->getNumeColoana());
+			this->listaColoane[i].setTip(newColumns->getTip());
+			this->listaColoane[i].setDimensiune(newColumns->getDimensiune());
+			this->listaColoane[i].setValoareImplicita(newColumns->getValoareImplicita());
+		}
+	}
+
+	Coloana* getListaColoane() {
+		return this->listaColoane;
+	}
+
 };
+
+ostream& operator<<(ostream& out, const Linie& l) {
+	for (int i = 0; i < l.nrColoane; i++) {
+		out << l.listaColoane[i].getValoareImplicita() << " ";
+	}
+	return out;
+}
 
 class Tabel {								/*TABELUL*/
 private:
@@ -160,6 +191,9 @@ public:
 		for (int i = 0; i < nrColoane; i++) {
 			this->coloane[i] = Coloana(coloane[i]);
 		}
+		this->nrLinii = 0;
+
+		this->linii = new Linie[nrLinii];
 	}
 
 	Tabel(string numeTabel, int nrColoane, Coloana* coloane, int nrLinii, Linie* linii) {
@@ -188,6 +222,12 @@ public:
 		for (int i = 0; i < this->nrLinii; i++) {
 			this->coloane[i] = t.coloane[i];
 		}
+	}
+
+	void addLineToTable(Linie l) {
+		this->nrLinii++;
+		this->linii[nrLinii].setListaColoane(l.getListaColoane());
+		this->linii[nrLinii].setNrCol(l.getNrCol());
 	}
 
 	int getNrLinii() {
@@ -230,7 +270,7 @@ public:
 		this->numeTabel = numeTabel;
 	}
 
-	/*Tabel& operator=(const Tabel& t) {				//Imi dadea o eroare si am decis sa il scot, dupa ce imi trimiti din nou codul maine, o sa testez sa vad daca merge
+	/*Tabel& operator=(const Tabel& t) {				
 		this->numeTabel = t.numeTabel;
 		this->nrLinii = t.nrLinii;
 		if (this->linii != NULL) {
@@ -253,14 +293,7 @@ public:
 };
 
 
-class Comanda {						/*COMENZILE
-										Practic aici am creat o noua clasa pentru ca era mult mai usor de gestionat aplicatia
-										clasa ConsoleApplication are un obiect de tip Comanda, iar atunci cand programul incepe, ConsoleApplication sincronizeaza toate obiectele(clasele) intre ele
-										Daca spre exemplu ai ceva erori, e din cauza ca in clasa ta nou creata nu ai "sincronizat" obiectul cu celelalte
-										Spre exemplu, in clasa FetchData constructorul primeste un obiect de tip BazaDate si atunci obiectul propriu-zis "bd" din ConsoleApplication
-										ajunge sa fie in clasa FetchData
-										
-										La fel si aici, clasa Comanda este implementat in LucruFisiere si in BazaDate si trebuie sincronizate prin setteri, vezi cazuri() din ConsoleApplication.*/
+class Comanda {						
 private:
 	string comanda;
 	string* instructiuniSintaxa;
@@ -270,7 +303,7 @@ private:
 	void transformareStringInVector() {
 		int j = 0;
 		string temp;
-		this->instructiuniSintaxa = new string[this->nrCaractereInstructiuni / 2]; //vom avea aproximativ (nrCaractereInstructiuni / 2) instructiuni. Cel mai probabil alocam spatiu prea mult degeaba, dar nu mai stiu cum se face alocare dinamica
+		this->instructiuniSintaxa = new string[this->nrCaractereInstructiuni / 2]; //vom avea aproximativ (nrCaractereInstructiuni / 2) instructiuni
 		for (int i = 0; i < this->nrCaractereInstructiuni; i++) {
 			if (this->comanda.at(i) != ' ' && this->comanda.at(i) != '(' && this->comanda.at(i) != ')' && this->comanda.at(i) != ',' && this->comanda.at(i) != ';') {
 				temp.push_back(this->comanda.at(i));
@@ -295,7 +328,7 @@ private:
 				j++;
 			}
 			if (i == this->nrCaractereInstructiuni - 1) {
-				this->instructiuniSintaxa[j] = temp; //aici n am idee de ce da warning poate rezolvi tu
+				this->instructiuniSintaxa[j] = temp;
 				j++;
 			}
 		}
@@ -413,12 +446,7 @@ private:
 	Comanda command;
 
 public:
-
-	//mai jos sunt doua metode pentru a creea tabelele, practic pentru a le construi
-	//o metoda este cu parametri pentru a putea fi apelata in FetchData
-	//o metoda este fara parametri pentru a putea fi apelata in ConsoleApplication in functie de instructiunile de sintaxa din clasa Comanda
-
-	void creareTabel(string nume,int nrColoane, string* numeColoane, string* tipuri, int* dimensiuni, string* valoriImplicite) {
+	void creareTabel(string nume, int nrColoane, string* numeColoane, string* tipuri, int* dimensiuni, string* valoriImplicite) {
 
 		string* numeColoana = new string[nrColoane];
 		string* tip = new string[nrColoane];
@@ -439,7 +467,7 @@ public:
 		}
 
 		//if (this->tabele != NULL) { de testat cum merge
-			delete[] this->tabele;
+		delete[] this->tabele;
 		//}
 
 		this->tabele = new Tabel[this->nrTabele];
@@ -500,9 +528,9 @@ public:
 				temp[i] = this->tabele[i];
 			}
 
-			//if (this->tabele != NULL) { de testat cum merge
+			if (this->tabele != NULL) {
 				delete[] this->tabele;
-			//}
+			}
 
 			this->tabele = new Tabel[this->nrTabele];
 			for (int i = 0; i < this->nrTabele - 1; i++) {
@@ -528,7 +556,7 @@ public:
 		}
 	}
 
-	//aici am adaugat append-urile pentru ca sa poata si returna structur
+	//aici am adaugat append-urile pentru ca sa poata si returna structura tabelului
 	//astfel poate fi folosita la operatiile de scriere in fisier
 
 	string afisareStructuraTabele() {
@@ -562,7 +590,13 @@ public:
 		for (int i = 0; i < this->nrTabele; i++) {
 			if (this->tabele[i].getNumeTabel() == numeTabel) {
 				cout << this->tabele[i].getNumeTabel() << endl;
-				cout << this->tabele[i].getColoane()->getNumeColoana() << " " << this->tabele[i].getColoane()->getTip() << " " << this->tabele[i].getColoane()->getDimensiune() << " " << this->tabele[i].getColoane()->getValoareImplicita() << endl;
+				for (int j = 0; j < this->tabele[i].getNrColoane(); j++)
+				{
+					//cout << this->tabele[i].getColoane()[j].getNumeColoana() << " " << this->tabele[i].getColoane()[j].getTip() << " " << this->tabele[i].getColoane()[j].getDimensiune() << " " << this->tabele[i].getColoane()[j].getValoareImplicita() << endl;
+					cout << this->tabele[i].getColoane()[j].getNumeColoana() << "    ";
+				}
+
+				cout << endl;
 				verificare = true;
 			}
 		}
@@ -571,10 +605,8 @@ public:
 		}
 	}
 
-	//AICI ai tu de facut ceva ca sa mearga pentru ca afiseaza valorile din tabela si cum nu merg insert-urile n-am avut ce sa ii fac
-	//metoda e oricum de data trecuta 
-
-	void afisareTabel(string numeTabel) { //asta nu merge cum ar trebui, trebuie sa mai umbli tu pe la linii si sa faci in asa fel incat sa aifseze toata tabela cu datele ei 
+private:
+	void afisareTabel_OLD(string numeTabel) { 
 		bool verificare = false;
 		for (int i = 0; i < this->nrTabele; i++) {
 			if (this->tabele[i].getNumeTabel() == numeTabel) {
@@ -584,6 +616,34 @@ public:
 				}
 				verificare = true;
 				break;
+
+			}
+		}
+		if (!verificare) {
+			throw ExceptionTableNotExisting();
+		}
+	}
+
+public:
+	void afisareTabel(string numeTabel) { 
+		bool verificare = false;
+		for (int i = 0; i < this->nrTabele; i++) {
+			if (this->tabele[i].getNumeTabel() == numeTabel) {
+				//cout << this->tabele[i].getColoane() << endl;
+
+				/*for (int j = 0; j < this->tabele[i].getNrColoane(); j++) {
+					cout << this->tabele[i].getColoane()[j].getValoareImplicita() << endl;
+				}*/
+				for (int nrLinii = 0; nrLinii < this->tabele[i].getNrLinii(); nrLinii++)
+				{
+					//for (int j = 0; j < this->tabele[i].getNrColoane(); j++) {
+					cout << this->tabele[i].getLinii()[nrLinii] << endl;;
+					//}
+				}
+
+				verificare = true;
+				break;
+
 
 			}
 		}
@@ -625,7 +685,8 @@ public:
 		}
 	}
 
-	void inserareInTabel(int pozNumeTabel, int pozInceput, int pozFinal, int pozInceputInserabile, int pozFinalInserabile) {
+private:
+	void inserareInTabel_old(int pozNumeTabel, int pozInceput, int pozFinal, int pozInceputInserabile, int pozFinalInserabile) { //TBD
 
 		for (int i = pozInceput; i < pozFinal; i++) {
 			cout << command.getInstructiuniSintaxa()[i];
@@ -648,7 +709,7 @@ public:
 		{
 			cout << this->tabele[semafor].getColoane()[i].getNumeColoana() << " ";
 		}
-		cout << endl;																																/////**** DE REFACUT CODUL (DE INLOCUIT GETURILE
+		cout << endl;
 		this->tabele[semafor].setNrLinii(this->tabele[semafor].getNrLinii() + 1);
 		Coloana* listaCol = new Coloana[this->tabele[semafor].getNrColoane()];
 		int newNrColoane = 0;
@@ -667,6 +728,12 @@ public:
 		}
 		Linie temp(this->tabele[semafor].getNrColoane(), listaCol); //creez linie
 		//cout << temp.getNrCol();
+		//this->tabele[semafor].setNrLinii(this->tabele[semafor].getNrLinii() + 1); //incrementez nr de linii
+		//temporar - setez toate liniile intr-un obiect, ca sa le parsez la setter-ul pt linii
+		Linie* liniiTemp = this->tabele[semafor].getLinii();
+		cout << liniiTemp[1];
+
+		/*	this->tabele[semafor].setLinii();*/
 
 
 		/*for (int i = pozInceputInserabile; i < pozFinalInserabile; i++) {
@@ -677,6 +744,69 @@ public:
 
 
 	}
+
+public:
+	void inserareInTabel(int pozNumeTabel, int pozInceput, int pozFinal, int pozInceputInserabile, int pozFinalInserabile, string* instructiuniSintaxa) {
+
+
+		int semafor = -1;
+		for (int i = 0; i < this->nrTabele; i++) {
+			if (this->tabele[i].getNumeTabel() == command.getInstructiuniSintaxa()[pozNumeTabel]) {
+				semafor = i;
+			}
+		}
+
+		if (semafor == -1) {
+			cout << command.getInstructiuniSintaxa()[pozNumeTabel];
+			throw ExceptionTableNotExisting();
+		}
+		Coloana* listaCol = new Coloana[this->tabele[semafor].getNrColoane() + 1];
+		int newNrColoane = 0;
+
+
+		for (int i = pozInceputInserabile; i < pozFinalInserabile && instructiuniSintaxa[i] != ")"; i++) {
+			int nrCol = 0;
+			if (instructiuniSintaxa[i] != "(" && instructiuniSintaxa[i] != ")" && instructiuniSintaxa[i] != "," && instructiuniSintaxa[i] != ";") {
+				nrCol++;
+				listaCol[newNrColoane].setValoareImplicita(instructiuniSintaxa[i]);
+				listaCol[newNrColoane].setDimensiune(this->tabele[semafor].getColoane()[nrCol].getDimensiune());
+				listaCol[newNrColoane].setNumeColoana(this->tabele[semafor].getColoane()[nrCol].getNumeColoana());
+				listaCol[newNrColoane].setTip(this->tabele[semafor].getColoane()[nrCol].getTip());
+				cout << instructiuniSintaxa[i] << endl;
+
+			}
+		}
+
+		Linie temp(this->tabele[semafor].getNrColoane(), listaCol);
+		//cout << temp;
+
+		//cout << temp.getNrCol();
+		//this->tabele[semafor].setNrLinii(this->tabele[semafor].getNrLinii() + 1); //incrementez nr de linii
+
+
+
+
+		this->tabele[semafor].addLineToTable(temp);
+		cout << "tabelul are " << this->tabele[semafor].getNrLinii() << " linii" << endl;
+		//temporar - setez toate liniile intr-un obiect, ca sa le parsez la setter-ul pt linii
+		//
+
+		/*Linie* liniiTemp = new Linie[this->tabele[semafor].getNrLinii() + 1]();
+		liniiTemp = this->tabele[semafor].getLinii();*/
+
+		/*	for (int i = 0; i < this->tabele[semafor].getNrLinii(); i++) {
+				cout << liniiTemp[i];
+			}*/
+
+
+
+			/*liniiTemp[this->tabele[semafor].getNrLinii()].setListaColoane(temp.getListaColoane());
+			this->tabele[semafor].setLinii(liniiTemp);*/
+
+
+
+	}
+
 
 	void stergereDinTabel(int pozNumeTabel, int pozConditie) {
 		cout << "Se sterg din tabelul " << command.getInstructiuniSintaxa()[pozNumeTabel] << " liniile unde " << command.getInstructiuniSintaxa()[pozConditie] << endl;
@@ -738,10 +868,6 @@ public:
 		return this->command;
 	}
 
-	/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-	//Metoda foarte importanta, prin asta se sincronizeaza toate obiectele in clasa ConsoleApplication
-	//Mai e o metoda la fel in LucruFisiere
-
 	void setCommand(Comanda command) {
 		this->command = command;
 	}
@@ -778,8 +904,6 @@ public:
 
 	friend istream& operator>>(istream&, BazaDate&);
 };
-
-//Clasa asta e destul de basic, am creat o doar ca sa facem cerintele tehnice (minim 3 clase cu relatie has-a)
 
 class Fisier {
 private:
@@ -862,21 +986,22 @@ ifstream& operator>>(ifstream& input, Fisier& f)
 
 
 //Clasa SaveData prin metoda save() salveaza intr-un fisier txt (am incercat binar insa nu merge)
-//Structura tabelelor, pentru ca data viitoare cand utilizaztorul va porni aplicatia
-//Clasa FetchData va putea prelua structura tabelelor si va construi tabelele
+//structura tabelelor, pentru ca data viitoare cand utilizaztorul va porni aplicatia
+//clasa FetchData va putea prelua structura tabelelor si va construi tabelele
 
 class SaveData {
 private:
 	BazaDate bd;
 	char* codStructuraTabele;
 	int nrCaractere;
-	
+
 
 public:
 	void save() {
-		ofstream myFile("configure.bin", ios::out);
+		ofstream myFile("configure.txt", ios::out);
 		myFile.write(this->codStructuraTabele, this->nrCaractere);
 		myFile.close();
+		cout << "All data commited/saved." << endl;
 	}
 
 	SaveData() {
@@ -891,7 +1016,7 @@ public:
 		string cod = bd.afisareStructuraTabele();
 		this->nrCaractere = cod.length();
 		this->codStructuraTabele = new char[this->nrCaractere + 1];
-		strcpy(this->codStructuraTabele, (char*) &cod);
+		strcpy(this->codStructuraTabele, (char*)&cod);
 	}
 
 	SaveData(BazaDate bd, char* codStructuraTabele) {
@@ -939,7 +1064,7 @@ public:
 			this->nrCaractere = strlen(cod);
 			this->codStructuraTabele = new char[this->nrCaractere + 1];
 			strcpy(this->codStructuraTabele, cod);
-			
+
 		}
 		else {
 			throw NullPointerException();
@@ -958,7 +1083,7 @@ public:
 		string line;
 		string* linii = new string[1];
 		linii[0] = "Default";
-		ifstream fileInput("configure.bin", ios::in);
+		ifstream fileInput("configure.txt", ios::in);
 		if (!fileInput.is_open()) {
 			return this->bd;
 		}
@@ -973,7 +1098,7 @@ public:
 					string* valoareImplicita = new string[nrColoane];
 					for (int i = 0; i < nrColoane; i++) {
 
-						istringstream buf(linii[i+1]);
+						istringstream buf(linii[i + 1]);
 						istream_iterator<std::string> beg(buf), end;
 						vector<std::string> tokens(beg, end);
 
@@ -1009,8 +1134,8 @@ public:
 				delete[] temp;
 
 			}
-				
-		}	
+
+		}
 
 
 		string nume = linii[0];
@@ -1068,8 +1193,8 @@ public:
 	}
 };
 
-//Clasa asta am facut-o mai mult ca sa citeasca comenziile din fisiere txt
-//Spre exemplu daca scrii in consola poo_proiect.exe fisier1.txt; (foarte importanta ;) daca nu o pui nu ti va lua fisierul/toate fisierele 
+//Clasa asta am facut-o mai mult ca sa citeasca comenziile din fisiere txt 
+//Spre exemplu daca scrii in consola poo_proiect.exe fisier1.txt; (foarte importanta ;   daca nu o pui nu ti va lua fisierul/toate fisierele)  
 //Va lua toate liniile din fisier si va trece prin metoda cazuri() din ConsoleApplication
 
 //Practic, e ca si cum ar citi de la consola o comanda, doar ca in fisier poate citi mai mutle comenzi
@@ -1098,9 +1223,9 @@ public:
 		this->nrFisiere = command.getNrInstructiuni() - 1;
 		this->fisiere = new Fisier[this->nrFisiere];
 		while (i < this->nrFisiere) {
-			size_t pos = command.getInstructiuniSintaxa()[i+1].find('.');
-			string extensie = command.getInstructiuniSintaxa()[i+1].substr(pos + 1);
-			string numeFisier = command.getInstructiuniSintaxa()[i+1].substr(0, pos);
+			size_t pos = command.getInstructiuniSintaxa()[i + 1].find('.');
+			string extensie = command.getInstructiuniSintaxa()[i + 1].substr(pos + 1);
+			string numeFisier = command.getInstructiuniSintaxa()[i + 1].substr(0, pos);
 			this->fisiere[i] = Fisier(numeFisier, extensie);
 			i++;
 		}
@@ -1114,7 +1239,7 @@ public:
 			transform(nume.begin(), nume.end(), nume.begin(), ::tolower);
 			ifstream fileInput(nume);
 			int count = 0;
-			string line; 
+			string line;
 			while (getline(fileInput, line))
 				count++;
 			fisiere[i].setNrLinii(count);
@@ -1222,8 +1347,6 @@ public:
 
 };
 
-//aici se afla tot "sos" ul aplicatiei
-
 
 class ConsoleApplication {
 
@@ -1234,12 +1357,7 @@ private:
 	SaveData sv;
 	FetchData fd;
 
-	//void update() {
-	//	if (bd.getCommand().getComanda() != c)
-	//	bd.setCommand(c);									/* AICI VOIAM SA FAC O METODA PRIVATA, PROBABIL O SA O IMPLEMENTEZ DUPA CE TERMINI*/
-	//	lc.setCommand(c);
-	//}
-	
+
 	void cazuri() {				/* aici se fac cazurile atat pentru comenzile din consola cat si pentru comenzile primite din fisiere*/
 		bd.setCommand(c);
 		lc.setCommand(c);
@@ -1248,7 +1366,7 @@ private:
 		}
 		if (c.getInstructiuniSintaxa()[0] == "CREATE" && c.getInstructiuniSintaxa()[1] == "TABLE") {
 			bd.creareTabel();
-			bd.afisareStructuraTabel(c.getInstructiuniSintaxa()[2]); //asta e doar ca sa vezi ca se creeaza obiectele de tip Tabel, deci probabil ca sa mearga afisareTabel() trebuie sa faci tu ceva la clasele Linie, Coloana etc.
+			bd.afisareStructuraTabel(c.getInstructiuniSintaxa()[2]); 
 		}
 		else if (c.getInstructiuniSintaxa()[0] == "POO_PROIECT.EXE") {
 			if (c.getNrInstructiuni() > 1) {
@@ -1257,11 +1375,11 @@ private:
 				lc.atribuieNumeleFisierelor();
 				string* comenzi = new string[lc.getNrTotalLiniiDinFisiere()];
 				comenzi = lc.citireDinFisiere();
-				
+
 				for (int i = 0; i < lc.getNrTotalLiniiDinFisiere(); i++) {
 					this->program(comenzi[i]);
 				}
-				
+
 			}
 			else {
 				throw ExceptionWrongSyntax();
@@ -1318,7 +1436,18 @@ private:
 			while (finalColoaneInserabile < c.getNrInstructiuni()) {
 				finalColoaneInserabile++;
 			}
-			bd.inserareInTabel(pozNumeTabel, inceputColoaneTemplate, finalColoaneTemplate, inceputColoaneInserabile, finalColoaneInserabile);
+
+			/*for (int i = 0; i < finalColoaneInserabile; i++) {
+				cout << c.getInstructiuniSintaxa()[i];
+			}
+			cout << endl;*/
+			/*string* paramComanda = c.getInstructiuniSintaxa();
+			for (int i = 0; i < finalColoaneInserabile; i++)
+			{
+				cout << paramComanda[i];
+			}*/
+			string* paramComanda = c.getInstructiuniSintaxa();
+			bd.inserareInTabel(pozNumeTabel, inceputColoaneTemplate, finalColoaneTemplate, inceputColoaneInserabile, finalColoaneInserabile, paramComanda);
 		}
 		else if (c.getInstructiuniSintaxa()[0] == "DELETE" && c.getInstructiuniSintaxa()[1] == "FROM" && c.getInstructiuniSintaxa()[3] == "WHERE") {
 			int pozNumeTabel = 2;
@@ -1332,11 +1461,11 @@ private:
 
 
 	//Metoda asta am folosit-o pentru a trece prin cazuri fiecare comanda din fisiere (atunci cand bagi in consola poo_proiect.exe fisier1.txt;)
-	//De mentionat este ca mereu trebuie sa ppui ; la finalul unor comenzi fiindca altfel nu iti ia bine
-	//In special trebuie pui cand faci poo_proiect.exe fisier1.txt;
+	//De mentionat este ca mereu trebuie sa pui ; la finalul unor comenzi fiindca altfel nu iti ia bine
+	//In special trebuie sa pui cand faci poo_proiect.exe fisier1.txt;
 
 	void program(string comanda) {
-		if(comanda != "") {
+		if (comanda != "") {
 			c.citireComandaDinFisier(comanda);
 			bd.setCommand(c);
 			lc.setCommand(c);
@@ -1357,11 +1486,6 @@ public:
 		cazuri();
 	}
 
-	//aici sunt constructorii si practic aici se sincronizeaza obiectele
-	//dar si atunci cand se folosesc setteri
-	//daca te uiti mai sus am vrut sa fac o metoda update()
-	//practic aia sincroniza tot ca sa fie bine
-
 	ConsoleApplication() {
 		this->bd = BazaDate();
 		this->lc = LucruFisiere();
@@ -1370,7 +1494,7 @@ public:
 		this->fd = FetchData();
 	}
 
-	ConsoleApplication(BazaDate bd, LucruFisiere lc, Comanda c,SaveData sv, FetchData fd) {
+	ConsoleApplication(BazaDate bd, LucruFisiere lc, Comanda c, SaveData sv, FetchData fd) {
 		this->bd = bd;
 		this->lc = lc;
 		this->c = c;
@@ -1420,7 +1544,7 @@ void main() {
 	LucruFisiere lc;
 	SaveData sv;
 	FetchData fd;
-	cin >> bd;	
+	cin >> bd;
 	ConsoleApplication ca(bd, lc, c, sv, fd);
 	bool i = true;
 	while (i) {
